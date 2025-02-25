@@ -4,6 +4,7 @@ import os
 import pandas as pd
 from dim_red_methods import diffusion_map, pca
 import statistics as stat
+from similarity_functions import *
 
 np.set_printoptions(precision=4, linewidth=200)
 
@@ -24,20 +25,7 @@ def compute_weight_norm(eig_mat):
     return compute_weight_raw(eig_mat)
 ############################
 
-### SIMILARITY FUNCTIONS ###
-def cosine_similarity(a, b):
-    return np.dot(a,b) / (npla.norm(a) * npla.norm(b))
-
-def euclidean_distance(a, b):
-    return np.linalg.norm(a - b)
-
-def mean_squared_error(a, b):
-    return np.mean((a - b) ** 2)
-
-def relative_difference(a, b):
-    return np.mean(np.abs((a - b) / a)) * 100
-############################
-
+#### EROS DISTANCE ######
 def Eros(A,B,weights,similarity,dim_red):
     n = np.shape(A)[0]
 
@@ -52,7 +40,9 @@ def Eros(A,B,weights,similarity,dim_red):
     result /= n
     
     return result
+############################
 
+#### MATRIX OF EIGENVALUES ######
 def build_eig_mat(matrices, dim_red):
     # Iterate over files in directory
     eigenvalues = []
@@ -64,6 +54,7 @@ def build_eig_mat(matrices, dim_red):
     eigs = np.stack(eigenvalues, axis=1)
 
     return eigs
+##################################
 
 def compare_distances(folder1, folder2, similarity, dim_red_1, dim_red_2, max_iter=100):
     # Construct all the matrices
