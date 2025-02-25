@@ -69,8 +69,6 @@ def construct_matrix_not_blacklist(path, blacklist):
     interesting_receivers = df[~df['to_address'].isin(blacklist)]
     block_numbers = df['block_number'].unique()
 
-    interesting_senders.to_csv('interesting_senders.csv')
-    interesting_receivers.to_csv('interesting_receivers.csv')
 
     print('Number of interesting senders:', len(interesting_senders))
     print('Number of interesting receivers:', len(interesting_receivers))
