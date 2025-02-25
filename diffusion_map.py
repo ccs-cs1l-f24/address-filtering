@@ -3,19 +3,6 @@ import numpy.linalg as npla
 import os
 import pandas as pd
 
-# f = 'Code-Files/time_series_data/series_0xd433138d12beB9929FF6fd583DC83663eea6Aaa5.csv'
-# A = np.genfromtxt(f, delimiter=',', dtype=np.float64, skip_header=1)
-# A = np.array([[int(x.decode()) if isinstance(x, bytes) else x for x in row] for row in A]) 
-
-# f = 'Code-Files/time_series_data/series_0x9B99CcA871Be05119B2012fd4474731dd653FEBe.csv'
-# B = np.genfromtxt(f, delimiter=',', dtype=np.float64, skip_header=1)
-# B = np.array([[int(x.decode()) if isinstance(x, bytes) else x for x in row] for row in B]) 
-
-
-# f = 'Code-Files/time_series_data/series_0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97.csv'
-# C = np.genfromtxt(f, delimiter=',', dtype=np.float64, skip_header=1)
-# C = np.array([[int(x.decode()) if isinstance(x, bytes) else x for x in row] for row in C])
-
 def kernel_func(x, y, sigma):
     return np.exp(-npla.norm(x-y)**2/(2*sigma**2))
 
@@ -27,12 +14,25 @@ def kernel_matrix(X, sigma):
             K[i, j] = kernel_func(X[i], X[j], sigma)
     return K
 
-def diffusion_map(X, sigma):
+def diffusion_map(X, sigma=1):
+    # pairwise kernel matrix
     K = kernel_matrix(X, sigma)
+
+    # degree matrix
     D = np.diag(1/np.sqrt(np.sum(K, axis=1)))
+
+    # normalized diffusion matrix (diffusion process)
     P = np.dot(np.dot(D, K), D)
+
+    # get "principal components" in a way
     w, v = npla.eig(P)
+
+    # sort
     idx = np.argsort(w)[::-1]
+
+    # eigenvalues
     w = w[idx]
+    # eigenvectors
     v = v[:, idx]
+
     return w, v
