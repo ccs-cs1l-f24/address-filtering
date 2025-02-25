@@ -14,7 +14,7 @@ def kernel_matrix(X, sigma):
             K[i, j] = kernel_func(X[i], X[j], sigma)
     return K
 
-def diffusion_map(X, sigma):
+def diffusion_map(X, sigma=1):
     # pairwise kernel matrix
     K = kernel_matrix(X, sigma)
 
