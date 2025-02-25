@@ -36,3 +36,9 @@ def diffusion_map(X, sigma=1):
     v = v[:, idx]
 
     return w, v
+
+def pca(A):
+    cov_A = np.cov(A)
+    U_A, S_A, V_A = npla.svd(cov_A)
+
+    return S_A, V_A
