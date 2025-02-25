@@ -2,7 +2,7 @@ import numpy as np
 import numpy.linalg as npla
 import os
 import pandas as pd
-from diffusion_map import diffusion_map
+from dim_red_methods import diffusion_map, pca
 import statistics as stat
 
 np.set_printoptions(precision=4, linewidth=200)
@@ -38,12 +38,6 @@ def relative_difference(a, b):
     return np.mean(np.abs((a - b) / a)) * 100
 ############################
 
-def pca(A):
-    cov_A = np.cov(A)
-    U_A, S_A, V_A = npla.svd(cov_A)
-
-    return S_A, V_A
-
 def Eros(A,B,weights,similarity,dim_red):
     n = np.shape(A)[0]
 
@@ -59,69 +53,26 @@ def Eros(A,B,weights,similarity,dim_red):
     
     return result
 
-def Eros_PCA(A, B, weights, similarity):
-    n = np.shape(A)[0]
-
-    cov_A = np.cov(A)
-    cov_B = np.cov(B)
-
-    U_A, S_A, V_A = npla.svd(cov_A)
-    U_B, S_B, V_B = npla.svd(cov_B)
-
-    result = 0
-    for i in range(n):
-        result += weights[i] * np.abs(similarity(V_A[i], V_B[i]))
-    
-    return result
-
-def Eros_Diffusion(A, B, weights):
-    n = np.shape(A)[0]
-
-    val_A, vec_A = diffusion_map(A)
-    val_B, vec_B = diffusion_map(B)
-
-    result = 0
-
-    for i in range(n):
-        result += weights[i] * np.abs(cosine_similarity(vec_A[i], vec_B[i]))
-
-    result /= n
-    
-    return result
-
-def build_eig_mat_diff(matrices):
+def build_eig_mat(matrices, dim_red):
     # Iterate over files in directory
     eigenvalues = []
     
     for A in matrices:
-        val, vec = diffusion_map(A)
+        val, vec = dim_red(A)
         eigenvalues.append(val)
 
     eigs = np.stack(eigenvalues, axis=1)
 
     return eigs
 
-def build_eig_mat_pca(matrices):
-    # Iterate over files in directory
-    sig_vals = []
-    
-    for A in matrices:
-        cov_A = np.cov(A.T)
-        U_A, S_A, V_A = npla.svd(cov_A)
-        sig_vals.append(S_A)
-
-    eigs = np.stack(sig_vals, axis=1)
-
-    return eigs
-
-def compare_distances(folder1, folder2):
+def compare_distances(folder1, folder2, similarity, dim_red_1, dim_red_2, max_iter=100):
     # Construct all the matrices
     mat_1 = []
     mat_2 = []
 
     num = 0
     for file in os.listdir(folder1):
-        if num < 100:
+        if num < max_iter:
             with open(os.path.join(folder1, file)) as f:
                 A = np.genfromtxt(f, delimiter=',', dtype=np.float64, skip_header=1)
                 A = np.array([[int(x.decode()) if isinstance(x, bytes) else x for x in row] for row in A]).T 
@@ -133,7 +84,7 @@ def compare_distances(folder1, folder2):
 
     num = 0
     for file in os.listdir(folder2):
-        if num < 100:
+        if num < max_iter:
             with open(os.path.join(folder2, file)) as f:
                 A = np.genfromtxt(f, delimiter=',', dtype=np.float64, skip_header=1)
                 A = np.array([[int(x.decode()) if isinstance(x, bytes) else x for x in row] for row in A]).T 
@@ -144,8 +95,8 @@ def compare_distances(folder1, folder2):
     print('100 comparison matrices constructed...')
 
     # Construct weights for interest class
-    eigs_mat_diff = build_eig_mat_diff(mat_1)
-    eigs_mat_pca = build_eig_mat_pca(mat_1)
+    eigs_mat_diff = build_eig_mat(mat_1, dim_red_1)
+    eigs_mat_pca = build_eig_mat(mat_1, dim_red_2)
     print('Eigenvalues calculated...')
 
     weights_diff = compute_weight_norm(eigs_mat_diff)
@@ -157,8 +108,8 @@ def compare_distances(folder1, folder2):
     for A_1 in mat_1:
         for A_2 in mat_1:
             if not np.all(A_1 == A_2):
-                difference_in_same_diff.append(Eros_Diffusion(A_1, A_2, weights_diff))
-                difference_in_same_pca.append(Eros_PCA(A_1,A_2, weights_pca))
+                difference_in_same_diff.append(Eros(A_1, A_2, weights_diff, similarity, dim_red_1))
+                difference_in_same_pca.append(Eros(A_1,A_2, weights_pca, similarity, dim_red_2))
     print('Distances compared for same class...')
 
     difference_in_diff_diff = []
@@ -166,8 +117,8 @@ def compare_distances(folder1, folder2):
 
     for A in mat_1:
         for B in mat_2:
-            difference_in_diff_diff.append(Eros_Diffusion(A,B,weights_diff))
-            difference_in_diff_pca.append(Eros_PCA(A,B,weights_pca))
+            difference_in_diff_diff.append(Eros(A,B,weights_diff, similarity, dim_red_1))
+            difference_in_diff_pca.append(Eros(A,B,weights_pca, similarity, dim_red_1))
 
     print('--- Diffusion Map ---')
     print('Mean difference in same class:', stat.mean(difference_in_same_diff), ', Standard deviation:', stat.stdev(difference_in_same_diff))
@@ -177,20 +128,4 @@ def compare_distances(folder1, folder2):
     print('Mean difference in different class:', stat.mean(difference_in_diff_pca), ', Standard deviation:', stat.stdev(difference_in_diff_pca))
     print('---------------------')
 
-# f = "Matrices/0x0a05956d2e3a21379af4abaa17bf883c04a67a7e.csv"
-# A = np.genfromtxt(f, delimiter=',', dtype=np.float64, skip_header=1)
-# A = np.array([[int(x.decode()) if isinstance(x, bytes) else x for x in row] for row in A]).T 
-
-# f = "Matrices/0xfdc27cb5c94095b2877ed9f688dd7a39d2bf45cd.csv"
-# B = np.genfromtxt(f, delimiter=',', dtype=np.float64, skip_header=1)
-# B = np.array([[int(x.decode()) if isinstance(x, bytes) else x for x in row] for row in B]).T 
-
-# eig_mat_diff = build_eig_mat_diff('Matrices')
-# weights_diff = compute_weight_norm(eig_mat_diff)
-
-# print(Eros_Diffusion(A, B, weights_diff))
-
-# eig_mat_pca = build_eig_mat_diff('Matrices')
-# weights_pca = compute_weight_norm(eig_mat_pca)
-
-compare_distances('Matrices', 'CompareMatrices')
+compare_distances('Matrices', 'CompareMatrices', euclidean_distance, diffusion_map, pca)
