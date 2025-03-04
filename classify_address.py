@@ -12,7 +12,8 @@ import sys
 
 # functionality:
 # - read in a csv of transaction data into matrices
-# - take a single address and csv of transaction data and read into a matrix
+# - take a single address and csv of transaction data and read into a matrix (NEED TO DO)
 # - compute weights (specify dimension reduction method)
 # - compute eros distance between two matrices (given weights, similarity function, and dim reduction method)
-# - classify address based on threshold value
+# - classify address based on threshold value (NEED TO DO)
+# - define spectra for a class given folder of matrices
