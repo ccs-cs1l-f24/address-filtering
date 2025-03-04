@@ -24,9 +24,9 @@ def construct_single_matrix(path, address, output_to):
                     matrix.loc[block, 'unique_receivers'] += 1
                 except:
                     print('Error:', sender, receiver, value)
-                    print(matrix_dict[sender].loc[block])
+                    print(matrix.loc[block])
                     continue
-            if receiver in matrix_dict.keys():
+            if receiver == address:
                 try:
                     matrix.loc[block, 'in_tx'] += 1
                     matrix.loc[block, 'in_value'] += value

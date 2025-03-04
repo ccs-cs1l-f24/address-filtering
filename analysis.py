@@ -138,4 +138,18 @@ def compare_distances(folder1, folder2, similarity, dim_red_1, dim_red_2, max_it
     print('Mean difference in different class:', stat.mean(difference_in_diff_pca), ', Standard deviation:', stat.stdev(difference_in_diff_pca))
     print('---------------------')
 
-compare_distances('Matrices', 'CompareMatrices', euclidean_distance, diffusion_map, pca)
+# compare_distances('Matrices', 'CompareMatrices', euclidean_distance, diffusion_map, pca)
+
+def classify_user(address_matrix, spectra_csv, threshold, weights, similarity, dim_red):
+    A = np.genfromtxt(address_matrix, delimiter=',', dtype=np.float64, skip_header=1)
+    A = np.array([[int(x.decode()) if isinstance(x, bytes) else x for x in row] for row in A]).T 
+    
+    spectra = np.genfromtxt(spectra_csv, delimiter=',', dtype=np.float64, skip_header=1)
+    spectra = np.array([[int(x.decode()) if isinstance(x, bytes) else x for x in row] for row in spectra]).T 
+    
+    dist = Eros(A, spectra, weights, similarity, dim_red)
+    
+    if dist < threshold:
+        return True
+    else:
+        return False
