@@ -46,18 +46,37 @@ def Eros(A,B,weights,similarity,dim_red):
 def build_eig_mat(matrices, dim_red):
     # Iterate over files in directory
     eigenvalues = []
+    eigenvectors = []
     
     for A in matrices:
         val, vec = dim_red(A)
         eigenvalues.append(val)
+        eigenvectors.append(vec.T)
 
     eigs = np.stack(eigenvalues, axis=1)
+    vecs = [np.stack([vec[i] for vec in eigenvectors], axis=1) for i in range(eigenvectors[0].shape[0])]
 
-    return eigs
+    return eigs, vecs
 ##################################
 
+def define_spectra(folder1, dim_red, func=np.mean):
+    # construct the matrices
+    mat_1 = []
+    for file in os.listdir(folder1):
+        with open(os.path.join(folder1, file)) as f:
+            A = np.genfromtxt(f, delimiter=',', dtype=np.float64, skip_header=1)
+            A = np.array([[int(x.decode()) if isinstance(x, bytes) else x for x in row] for row in A]).T 
+            mat_1.append(A)
+
+    # construct weights for class of interest
+    eigs_mat, eigs_vec_list = build_eig_mat(mat_1, dim_red)
+
+    centroids = np.stack([func(V, axis=1) for V in eigs_vec_list], axis=1)
+    return centroids
+
+
 def compare_distances(folder1, folder2, similarity, dim_red_1, dim_red_2, max_iter=100):
-    # Construct all the matrices
+    # construct the matrices
     mat_1 = []
     mat_2 = []
 
@@ -85,9 +104,9 @@ def compare_distances(folder1, folder2, similarity, dim_red_1, dim_red_2, max_it
             break
     print('100 comparison matrices constructed...')
 
-    # Construct weights for interest class
-    eigs_mat_diff = build_eig_mat(mat_1, dim_red_1)
-    eigs_mat_pca = build_eig_mat(mat_1, dim_red_2)
+    # construct weights for class of interest
+    eigs_mat_diff, vec = build_eig_mat(mat_1, dim_red_1)
+    eigs_mat_pca, vec = build_eig_mat(mat_1, dim_red_2)
     print('Eigenvalues calculated...')
 
     weights_diff = compute_weight_norm(eigs_mat_diff)

@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 
-def construct_matrix(path, blacklist):
+def construct_matrix(path, blacklist, output_folder='Matrices'):
     df = pd.read_csv(path)
     df_blacklist = pd.read_csv(blacklist)
     blacklist = df_blacklist['ADDRESS']
@@ -54,12 +54,12 @@ def construct_matrix(path, blacklist):
 
     # Save to csv
     for key in matrix_dict.keys():
-        matrix_dict[key].to_csv('Matrices/' + key + '.csv')
+        matrix_dict[key].to_csv(output_folder + '/' + key + '.csv')
 
 import pandas as pd
 import numpy as np
 
-def construct_matrix_not_blacklist(path, blacklist):
+def construct_matrix_not_interest(path, blacklist, output_folder='CompareMatrices'):
     df = pd.read_csv(path)
     df_blacklist = pd.read_csv(blacklist)
     blacklist = df_blacklist['ADDRESS']
@@ -109,10 +109,4 @@ def construct_matrix_not_blacklist(path, blacklist):
 
     # Save to csv
     for key in matrix_dict.keys():
-        matrix_dict[key].to_csv('CompareMatrices/' + key + '.csv')
-
-
-# Download the dataset and construct the matrix
-dataset_path = 'eth_transactions.csv'
-blacklist_path = 'layerzero_sybils.csv'
-construct_matrix(dataset_path, blacklist_path)
+        matrix_dict[key].to_csv(output_folder + '/' + key + '.csv')
