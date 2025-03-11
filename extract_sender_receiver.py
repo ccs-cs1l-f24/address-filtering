@@ -2,7 +2,47 @@ import os
 import pandas as pd
 import numpy as np
 
-def construct_matrix(path, blacklist):
+def construct_single_matrix(path, address, output_to):
+    df = pd.read_csv(path)
+    address = str(address)
+    interesting_senders = df[df['from_address'] == address]
+    interesting_receivers = df[df['to_address'] == address]
+    block_numbers = df['block_number'].unique()
+
+    matrix = pd.DataFrame(0, index=block_numbers, columns=['out_tx', 'in_tx', 'out_value', 'in_value', 'unique_receivers', 'unique_senders']).astype(np.float64)
+
+    for block in block_numbers:
+        block_df = df[df['block_number'] == block]
+        for i in range(block_df.shape[0]):
+            sender = block_df.iloc[i]['from_address']
+            receiver = block_df.iloc[i]['to_address']
+            value = block_df.iloc[i]['value']
+            if sender == address:
+                try:
+                    matrix.loc[block, 'out_tx'] += 1
+                    matrix.loc[block, 'out_value'] += value
+                    matrix.loc[block, 'unique_receivers'] += 1
+                except:
+                    print('Error:', sender, receiver, value)
+                    print(matrix.loc[block])
+                    continue
+            if receiver == address:
+                try:
+                    matrix.loc[block, 'in_tx'] += 1
+                    matrix.loc[block, 'in_value'] += value
+                    matrix.loc[block, 'unique_senders'] += 1
+                except:
+                    print('Error:', sender, receiver, value)
+                    print(matrix.loc[block])
+                    print(type(value))
+                    continue
+                
+
+    # Save to csv
+    matrix.to_csv(output_to + '/' + address + '.csv')
+
+
+def construct_matrix(path, blacklist, output_folder='Matrices'):
     df = pd.read_csv(path)
     df_blacklist = pd.read_csv(blacklist)
     blacklist = df_blacklist['ADDRESS']
@@ -54,12 +94,12 @@ def construct_matrix(path, blacklist):
 
     # Save to csv
     for key in matrix_dict.keys():
-        matrix_dict[key].to_csv('Matrices/' + key + '.csv')
+        matrix_dict[key].to_csv(output_folder + '/' + key + '.csv')
 
 import pandas as pd
 import numpy as np
 
-def construct_matrix_not_blacklist(path, blacklist):
+def construct_matrix_not_interest(path, blacklist, output_folder='CompareMatrices'):
     df = pd.read_csv(path)
     df_blacklist = pd.read_csv(blacklist)
     blacklist = df_blacklist['ADDRESS']
@@ -109,10 +149,4 @@ def construct_matrix_not_blacklist(path, blacklist):
 
     # Save to csv
     for key in matrix_dict.keys():
-        matrix_dict[key].to_csv('CompareMatrices/' + key + '.csv')
-
-
-# Download the dataset and construct the matrix
-dataset_path = 'eth_transactions.csv'
-blacklist_path = 'layerzero_sybils.csv'
-construct_matrix(dataset_path, blacklist_path)
+        matrix_dict[key].to_csv(output_folder + '/' + str(key) + '.csv')
