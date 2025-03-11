@@ -83,7 +83,8 @@ def main():
 		output_to = args.calc_weights[2]
 		weights = compute_weight_norm(eig_mat) if norm_or_not else compute_weight_raw(eig_mat)
 		np.save(output_to, weights)
-		print("Weights calculated and outputted to", output_to)
+		print("Weights calculated and outputted to", output_to + '.npy')
+		print(weights)
 	elif args.define_spectra:
 		if args.define_spectra[2] == 'mean':
 			agg_func = np.mean
@@ -156,3 +157,13 @@ if __name__ == "__main__":
 	main()
 
 # /Users/zoeynielsen/Desktop/Ethereum Research/address-filtering/Matrices2/0x0a11142eb9db99da8112001dc2c0d52e541b198d.csv
+
+# Sample Walkthrough:
+# python3 filtering.py -h
+# python3 filtering.py -b Data/eth_transactions_2.csv 0x07401eaec10b0440104dfa39018fab3fb57aab57 Matrices
+# python3 filtering.py -bf Data/eth_transactions_2.csv Data/layerzero_sybils.csv Matrices
+# python3 filtering.py -e Matrices diffusion
+# python3 filtering.py -w eig_mat.npy not weights
+# python3 filtering.py -s Matrices diffusion mean
+# python3 filtering.py -ed Matrices/0x0c865fa6cf39c93574aba01f6be46419287f30af.csv Matrices/0x2caafafbc21f65697824f83aeae6a9b1cb2a5b9d.csv weights.npy cosine diffusion
+# python3 filtering.py -c Matrices/0x85dd4fe1122a419e14b07327424c38196065f0e5.csv spectra.npy 0.05 weights.npy cosine diffusion

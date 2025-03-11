@@ -5,8 +5,6 @@ import numpy as np
 def construct_single_matrix(path, address, output_to):
     df = pd.read_csv(path)
     address = str(address)
-    interesting_senders = df[df['from_address'] == address]
-    interesting_receivers = df[df['to_address'] == address]
     block_numbers = df['block_number'].unique()
 
     matrix = pd.DataFrame(0, index=block_numbers, columns=['out_tx', 'in_tx', 'out_value', 'in_value', 'unique_receivers', 'unique_senders']).astype(np.float64)
