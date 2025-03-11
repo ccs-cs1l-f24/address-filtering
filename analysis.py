@@ -8,6 +8,23 @@ from similarity_functions import *
 
 np.set_printoptions(precision=4, linewidth=200)
 
+#### MATRIX OF EIGENVALUES ######
+def build_eig_mat(matrices, dim_red):
+    # Iterate over files in directory
+    eigenvalues = []
+    eigenvectors = []
+    
+    for A in matrices:
+        val, vec = dim_red(A)
+        eigenvalues.append(np.real(val))
+        eigenvectors.append(np.real(vec).T)
+
+    eigs = np.real(np.stack(eigenvalues, axis=1))
+    vecs = [np.stack([np.real(vec[i]) for vec in eigenvectors], axis=1) for i in range(eigenvectors[0].shape[0])]
+
+    return eigs, vecs
+##################################
+
 #### CALCULATE WEIGHTS ####
 def compute_weight_raw(eig_mat):
     n = eig_mat.shape[0]
@@ -42,23 +59,6 @@ def Eros(A,B,weights,similarity,dim_red):
     return result
 ############################
 
-#### MATRIX OF EIGENVALUES ######
-def build_eig_mat(matrices, dim_red):
-    # Iterate over files in directory
-    eigenvalues = []
-    eigenvectors = []
-    
-    for A in matrices:
-        val, vec = dim_red(A)
-        eigenvalues.append(val)
-        eigenvectors.append(vec.T)
-
-    eigs = np.stack(eigenvalues, axis=1)
-    vecs = [np.stack([vec[i] for vec in eigenvectors], axis=1) for i in range(eigenvectors[0].shape[0])]
-
-    return eigs, vecs
-##################################
-
 def define_spectra(folder1, dim_red, func=np.mean):
     # construct the matrices
     mat_1 = []
@@ -71,7 +71,7 @@ def define_spectra(folder1, dim_red, func=np.mean):
     # construct weights for class of interest
     eigs_mat, eigs_vec_list = build_eig_mat(mat_1, dim_red)
 
-    centroids = np.stack([func(V, axis=1) for V in eigs_vec_list], axis=1)
+    centroids = np.stack([np.real(func(np.real(V), axis=1)) for V in eigs_vec_list], axis=1)
     return centroids
 
 
@@ -144,12 +144,10 @@ def classify_user(address_matrix, spectra_csv, threshold, weights, similarity, d
     A = np.genfromtxt(address_matrix, delimiter=',', dtype=np.float64, skip_header=1)
     A = np.array([[int(x.decode()) if isinstance(x, bytes) else x for x in row] for row in A]).T 
     
-    spectra = np.genfromtxt(spectra_csv, delimiter=',', dtype=np.float64, skip_header=1)
-    spectra = np.array([[int(x.decode()) if isinstance(x, bytes) else x for x in row] for row in spectra]).T 
-    
+    spectra = np.load(spectra_csv)
     dist = Eros(A, spectra, weights, similarity, dim_red)
-    
-    if dist < threshold:
+    print(dist)
+    if dist > threshold:
         return True
     else:
         return False

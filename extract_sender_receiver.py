@@ -149,4 +149,4 @@ def construct_matrix_not_interest(path, blacklist, output_folder='CompareMatrice
 
     # Save to csv
     for key in matrix_dict.keys():
-        matrix_dict[key].to_csv(output_folder + '/' + key + '.csv')
+        matrix_dict[key].to_csv(output_folder + '/' + str(key) + '.csv')
